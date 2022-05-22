@@ -3,9 +3,9 @@ const urlModel = require('../models/urlModel')
 const validUrl = require('valid-url');
 const shortId = require('shortid')
 
-const redis = require("redis");
+const redis = require("redis");//works like mongoose(conect to the database)
 
-const { promisify } = require("util");
+const { promisify } = require("util");//return promise when function call(responce in object)
 
 //Connect to redis
 const redisClient = redis.createClient(
@@ -28,7 +28,7 @@ redisClient.on("connect", async function () {
 //Connection setup for redis
 
 const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
-const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);//.bind function ko create karata hai
 
 
 
@@ -54,7 +54,7 @@ let createShortUrl = async (req, res) => {
 
     let cahcedUrlData = await GET_ASYNC(`${data.longUrl}`)
 
-    let URL = JSON.parse(cahcedUrlData);
+    let URL = JSON.parse(cahcedUrlData);//parse convert the string data into object with help of parse
 
     if (cahcedUrlData) {
       return res.status(200).send({ status: true, message: "redis return", data: URL })
@@ -63,7 +63,7 @@ let createShortUrl = async (req, res) => {
 
     const baseUrl = 'http://localhost:3000'
     let urlCode = shortId.generate().toLowerCase();
-    const shortUrl = baseUrl + '/' + urlCode;
+    const shortUrl = baseUrl + '/' + urlCode;//add with the help of concatination
 
     data.urlCode = urlCode;
     data.shortUrl = shortUrl;
@@ -72,7 +72,7 @@ let createShortUrl = async (req, res) => {
 
     let bodyData = await urlModel.findOne({ urlCode: urlCode }).select({ _id: 0, __v: 0, createdAt: 0, updatedAt: 0 })
 
-    await SET_ASYNC(`${data.longUrl}`, JSON.stringify(bodyData))
+    await SET_ASYNC(`${data.longUrl,60}`, JSON.stringify(bodyData))//stringify converts a JavaScript object or value to a JSON string
 
     res.status(201).send({ status: true, message: "URL create successfully", data: bodyData })
 
@@ -93,14 +93,14 @@ let getUrl = async (req, res) => {
     let cahcedUrlData = await GET_ASYNC(`${urlCode}`)
 
     if (cahcedUrlData) {
-      return res.status(302).redirect(JSON.parse(cahcedUrlData))
+      return res.status(302).redirect(JSON.parse(cahcedUrlData))//parse convert the string data into object with help of parse
 
     } else {
 
       let getUrl = await urlModel.findOne({ urlCode: urlCode })
       if (!getUrl) return res.status(404).send({ status: false, message: 'Url-code not found' });
 
-      await SET_ASYNC(`${urlCode}`, JSON.stringify(getUrl.longUrl))
+      await SET_ASYNC(`${urlCode}`, JSON.stringify(getUrl.longUrl))//stringify converts a JavaScript object or value to a JSON string
       return res.status(302).redirect(getUrl.longUrl)
 
     }
